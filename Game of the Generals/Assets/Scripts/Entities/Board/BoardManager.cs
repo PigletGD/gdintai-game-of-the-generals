@@ -188,6 +188,7 @@ public class BoardManager : MonoBehaviour
         {
             if (settingUp)
             {
+                MusicManager.GetInstance().PlayMove();
                 currentBoard.PlacePiece(mouseX, mouseY, selectedPiece, settingUp);
                 SetPiecePositionOnBoard(selectedPiece);
             }
@@ -206,7 +207,6 @@ public class BoardManager : MonoBehaviour
                 SetAllPiecePositions();
             }
         }
-        else Debug.Log("Is Invalid");
 
         if (settingUp && currentBoard.board.Length >= 21) onAllPlayerPiecesOnBoard.Raise();
     }
