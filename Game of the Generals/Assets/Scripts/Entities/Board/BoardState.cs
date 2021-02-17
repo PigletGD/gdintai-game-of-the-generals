@@ -7,7 +7,7 @@ public class BoardState
     public BoardState parentBoard;
     public List<BoardState> childrenBoard;
 
-    public Dictionary<string, Piece> board;
+    public Piece[,] board;
     public List<Piece> alivePlayerPieces;
     public List<Piece> aliveComputerPieces;
     public List<Piece> deadPlayerPieces;
@@ -23,11 +23,26 @@ public class BoardState
     public bool atTerminalState;
     public bool playerWon;
 
-    public BoardState(BoardState newParent, List<BoardState> newChildren, Dictionary<string, Piece> newBoard, List<Piece> newPlayers, List<Piece> newComputer, List<Piece> newDeadPlayers, List<Piece> newDeadComputer, Piece newComputerFlag, bool newTurn)
+    public BoardState(BoardState newParent, List<BoardState> newChildren, Piece[,] newBoard, List<Piece> newPlayers, List<Piece> newComputer, List<Piece> newDeadPlayers, List<Piece> newDeadComputer, Piece newComputerFlag, bool newTurn)
     {
         parentBoard = newParent;
         childrenBoard = new List<BoardState>(newChildren);
-        board = new Dictionary<string, Piece>(newBoard);
+
+        board = new Piece[9, 8];
+
+        if (newBoard != null)
+        {
+            for (int x = 0; x < 9; x++)
+                for (int y = 0; y < 8; y++)
+                    board[x, y] = newBoard[x, y];
+        }
+        else
+        {
+            for (int x = 0; x < 9; x++)
+                for (int y = 0; y < 8; y++)
+                    board[x, y] = null;
+        }
+        
         alivePlayerPieces = new List<Piece>(newPlayers);
         aliveComputerPieces = new List<Piece>(newComputer);
         deadPlayerPieces = new List<Piece>(newDeadPlayers);
@@ -50,16 +65,18 @@ public class BoardState
     {
         foreach (Piece piece in alivePlayerPieces)
         {
-            if (piece.tileCoordinates.x < 0)
+            if (piece.xCoord < 0)
             {
-                Vector2 randomTileCoord;
+                int randX;
+                int randY;
 
                 do
                 {
-                    randomTileCoord = new Vector2(Random.Range(0, 9), Random.Range(0, 3));
-                } while (board.ContainsKey(GenerateKey(randomTileCoord)));
+                    randX = Random.Range(0, 9);
+                    randY = Random.Range(0, 3);
+                } while (board[randX, randY] != null);
 
-                PlacePiece(randomTileCoord, piece, true);
+                PlacePiece(randX, randY, piece, true);
             }
         }
     }
@@ -69,57 +86,60 @@ public class BoardState
     {
         foreach (Piece piece in aliveComputerPieces)
         {
-            Vector2 randomTileCoord;
+            int randX;
+            int randY;
 
             do
             {
-                randomTileCoord = new Vector2(Random.Range(0, 9), Random.Range(5, 8));
-            } while (board.ContainsKey(GenerateKey(randomTileCoord)));
+                randX = Random.Range(0, 9);
+                randY = Random.Range(5, 8);
+            } while (board[randX, randY] != null);
 
-            PlacePiece(randomTileCoord, piece, true);
+            PlacePiece(randX, randY, piece, true);
 
             piece.gameObject.SetActive(true);
         }
     }
 
-    public void PlacePiece(Vector2 tileCoordinates, Piece selectedPiece, bool settingUp)
+    public void PlacePiece(int x, int y, Piece selectedPiece, bool settingUp)
     {
+
         // Set Tile Info
-        if (!board.ContainsKey(GenerateKey(tileCoordinates)))
-            SetTileInfo(tileCoordinates, selectedPiece);
+        if (board[x, y] == null)
+            SetTileInfo(x, y, selectedPiece);
         else
         {
-            if (settingUp) TileSwap(tileCoordinates, selectedPiece);
-            else PieceContest(selectedPiece, board[GenerateKey(tileCoordinates)]);
+            if (settingUp) TileSwap(x, y, selectedPiece);
+            else PieceContest(selectedPiece, board[x, y]);
         }
     }
 
-    public bool TileIsValid(Vector2 tileCoordinates, Piece selectedPiece, bool settingUp)
+    public bool TileIsValid(int x, int y, Piece selectedPiece, bool settingUp)
     {
-        if (settingUp) return TileIsValidSetup(tileCoordinates, selectedPiece);
-        else return TileIsValidInGame(tileCoordinates, selectedPiece);
+        if (settingUp) return TileIsValidSetup(x, y, selectedPiece);
+        else return TileIsValidInGame(x, y, selectedPiece);
     }
 
-    private bool TileIsValidSetup(Vector2 tileCoordinates, Piece selectedPiece)
+    private bool TileIsValidSetup(int x, int y, Piece selectedPiece)
     {
-        if (selectedPiece.playerPiece && tileCoordinates.y >= 0 && tileCoordinates.y <= 2)
+        if (selectedPiece.playerPiece && y >= 0 && y <= 2)
             return true;
-        else if (!selectedPiece.playerPiece && tileCoordinates.y >= 5 && tileCoordinates.y <= 7)
+        else if (!selectedPiece.playerPiece && y >= 5 && y <= 7)
             return true;
         else
             return false;
     }
 
-    private bool TileIsValidInGame(Vector2 tileCoordinates, Piece selectedPiece)
+    private bool TileIsValidInGame(int x, int y, Piece selectedPiece)
     {
-        if (tileCoordinates.x >= 0 && tileCoordinates.x < 9 && tileCoordinates.y >= 0 && tileCoordinates.y < 8)
+        if (x >= 0 && x < 9 && y >= 0 && y < 8)
         {
-            if (board.ContainsKey(GenerateKey(tileCoordinates)))
+            if (board[x, y] != null)
             {
-                if (board[GenerateKey(tileCoordinates)].playerPiece != selectedPiece.playerPiece)
+                if (board[x, y].playerPiece != selectedPiece.playerPiece)
                 {
-                    int differenceX = (int)Mathf.Abs(tileCoordinates.x - selectedPiece.tileCoordinates.x);
-                    int differenceY = (int)Mathf.Abs(tileCoordinates.y - selectedPiece.tileCoordinates.y);
+                    int differenceX = (int)Mathf.Abs(x - selectedPiece.xCoord);
+                    int differenceY = (int)Mathf.Abs(y - selectedPiece.yCoord);
                     int difference = differenceX + differenceY;
 
                     if (difference == 1) return true;
@@ -129,8 +149,8 @@ public class BoardState
             }
             else
             {
-                int differenceX = (int)Mathf.Abs(tileCoordinates.x - selectedPiece.tileCoordinates.x);
-                int differenceY = (int)Mathf.Abs(tileCoordinates.y - selectedPiece.tileCoordinates.y);
+                int differenceX = (int)Mathf.Abs(x - selectedPiece.xCoord);
+                int differenceY = (int)Mathf.Abs(y - selectedPiece.yCoord);
                 int difference = differenceX + differenceY;
 
                 if (difference == 1) return true;
@@ -140,31 +160,33 @@ public class BoardState
         else return false;
     }
 
-    private void TileSwap(Vector2 tileCoordinates, Piece selectedPiece)
+    private void TileSwap(int x, int y, Piece selectedPiece)
     {
         // Gets piece already on board
-        Piece occupiedPiece = board[GenerateKey(tileCoordinates)];
+        Piece occupiedPiece = board[x, y];
 
         // Places occupied piece in selected piece's position
-        if (selectedPiece.tileCoordinates.x < 0)
+        if (selectedPiece.xCoord < 0)
         {
-            occupiedPiece.tileCoordinates = selectedPiece.tileCoordinates;
+            occupiedPiece.xCoord = selectedPiece.xCoord;
+            occupiedPiece.yCoord = selectedPiece.yCoord;
             occupiedPiece.transform.position = occupiedPiece.lastPosition = selectedPiece.lastPosition;
         }
         else
         {
-            board.Remove(GenerateKey(selectedPiece.tileCoordinates));
-            SetTileInfo(selectedPiece.tileCoordinates, occupiedPiece);
+            board[selectedPiece.xCoord, selectedPiece.yCoord] = null;
+            occupiedPiece.transform.position = occupiedPiece.lastPosition = selectedPiece.lastPosition;
+            SetTileInfo(selectedPiece.xCoord, selectedPiece.yCoord, occupiedPiece);
         }
 
         // Places selected piece in occupied piece's position
-        board.Remove(GenerateKey(tileCoordinates));
-        SetTileInfo(tileCoordinates, selectedPiece);
+        board[x, y] = null;
+        SetTileInfo(x, y, selectedPiece);
     }
 
     private void PieceContest(Piece attackingPiece, Piece defendingPiece)
     {
-        if (attackingPiece.playerPiece != defendingPiece.playerPiece && TileIsValid(defendingPiece.tileCoordinates, attackingPiece, false))
+        if (attackingPiece.playerPiece != defendingPiece.playerPiece && TileIsValid(defendingPiece.xCoord, defendingPiece.yCoord, attackingPiece, false))
         {
             switch (GetContestResult(attackingPiece.pieceType, defendingPiece.pieceType))
             {
@@ -184,9 +206,7 @@ public class BoardState
 
     private void AttackerWins(Piece attackingPiece, Piece defendingPiece)
     {
-        Vector2 contestingTileCoords = defendingPiece.tileCoordinates;
-
-        board.Remove(GenerateKey(contestingTileCoords));
+        board[defendingPiece.xCoord, defendingPiece.yCoord] = null;
         if (defendingPiece.playerPiece)
         {
             alivePlayerPieces.Remove(defendingPiece);
@@ -205,13 +225,13 @@ public class BoardState
             playerWon = defendingPiece.playerPiece;
         }
 
-        board.Remove(GenerateKey(attackingPiece.tileCoordinates));
-        SetTileInfo(contestingTileCoords, attackingPiece);
+        board[attackingPiece.xCoord, attackingPiece.yCoord] = null;
+        SetTileInfo(defendingPiece.xCoord, defendingPiece.yCoord, attackingPiece);
     }
 
     private void DefenderWins(Piece attackingPiece)
     {
-        board.Remove(GenerateKey(attackingPiece.tileCoordinates));
+        board[attackingPiece.xCoord, attackingPiece.yCoord] = null;
         if (attackingPiece.playerPiece)
         {
             alivePlayerPieces.Remove(attackingPiece);
@@ -233,7 +253,7 @@ public class BoardState
 
     private void SplitLoss(Piece attackingPiece, Piece defendingPiece)
     {
-        board.Remove(GenerateKey(attackingPiece.tileCoordinates));
+        board[attackingPiece.xCoord, attackingPiece.yCoord] = null;
         if (attackingPiece.playerPiece)
         {
             alivePlayerPieces.Remove(attackingPiece);
@@ -252,7 +272,7 @@ public class BoardState
             playerWon = attackingPiece.playerPiece;
         }
 
-        board.Remove(GenerateKey(defendingPiece.tileCoordinates));
+        board[defendingPiece.xCoord, defendingPiece.yCoord] = null;
         if (defendingPiece.playerPiece)
         {
             alivePlayerPieces.Remove(defendingPiece);
@@ -273,20 +293,30 @@ public class BoardState
 
     }
 
-    private void SetTileInfo(Vector2 tileCoordinates, Piece value)
+    private void SetTileInfo(int x, int y, Piece value)
     {
-        if (value.tileCoordinates.x >= 0)
-            board.Remove(GenerateKey(value.tileCoordinates));
-        value.tileCoordinates = tileCoordinates;
+        if (value.xCoord >= 0)
+            board[value.xCoord, value.yCoord] = null;
+        value.xCoord = x;
+        value.yCoord = y;
 
-        board.Add(GenerateKey(tileCoordinates), value);
+        board[x, y] = value;
     }
 
     public void ResetInfo()
     {
-        foreach (string key in board.Keys)
+        // reset it to actual values
+
+        for (int x = 0; x < 9; x++)
         {
-            board[key].tileCoordinates = ParseKey(key);
+            for (int y = 0; y < 8; y++)
+            {
+                if (board[x, y] != null)
+                {
+                    board[x, y].xCoord = x;
+                    board[x, y].yCoord = y;
+                }
+            }
         }
 
         foreach (Piece piece in alivePlayerPieces)
@@ -310,22 +340,6 @@ public class BoardState
         }
     }
 
-    public string GenerateKey(Vector2 tileCoordinates)
-    {
-        return $"{tileCoordinates.x} {tileCoordinates.y}";
-    }
-
-    private Vector2 ParseKey(string key)
-    {
-        Vector2 coord;
-        string[] keyCoords;
-
-        keyCoords = key.Split(' ');
-        coord = new Vector2(int.Parse(keyCoords[0]), int.Parse(keyCoords[1]));
-
-        return coord;
-    }
-
     public BoardState ComputerTurn()
     {
         AddAllPossibleFutureBoardStates();
@@ -343,37 +357,37 @@ public class BoardState
     {
         foreach (Piece piece in pieces)
         {
-            float row = piece.tileCoordinates.x;
-            float column = piece.tileCoordinates.y;
+            int row = piece.xCoord;
+            int column = piece.yCoord;
 
-            if (TileIsValid(new Vector2(row + 1, column), piece, false))
+            if (TileIsValid(row + 1, column, piece, false))
             {
                 BoardState possibleBoardState = this.GenerateChildOfBoardState();
-                possibleBoardState.PlacePiece(new Vector2(row + 1, column), piece, false);
+                possibleBoardState.PlacePiece(row + 1, column, piece, false);
                 childrenBoard.Add(possibleBoardState);
                 ResetInfo();
             }
 
-            if (TileIsValid(new Vector2(row - 1, column), piece, false))
+            if (TileIsValid(row - 1, column, piece, false))
             {
                 BoardState possibleBoardState = this.GenerateChildOfBoardState();
-                possibleBoardState.PlacePiece(new Vector2(row - 1, column), piece, false);
+                possibleBoardState.PlacePiece(row - 1, column, piece, false);
                 childrenBoard.Add(possibleBoardState);
                 ResetInfo();
             }
 
-            if (TileIsValid(new Vector2(row, column + 1), piece, false))
+            if (TileIsValid(row, column + 1, piece, false))
             {
                 BoardState possibleBoardState = this.GenerateChildOfBoardState();
-                possibleBoardState.PlacePiece(new Vector2(row, column + 1), piece, false);
+                possibleBoardState.PlacePiece(row, column + 1, piece, false);
                 childrenBoard.Add(possibleBoardState);
                 ResetInfo();
             }
 
-            if (TileIsValid(new Vector2(row, column - 1), piece, false))
+            if (TileIsValid(row, column - 1, piece, false))
             {
                 BoardState possibleBoardState = this.GenerateChildOfBoardState();
-                possibleBoardState.PlacePiece(new Vector2(row, column - 1), piece, false);
+                possibleBoardState.PlacePiece(row, column - 1, piece, false);
                 childrenBoard.Add(possibleBoardState);
                 ResetInfo();
             }
@@ -404,43 +418,43 @@ public class BoardState
             int directionPasses = 0;
             do
             {
-                float row = pieces[randomIndex].tileCoordinates.x;
-                float column = pieces[randomIndex].tileCoordinates.y;
+                int row = pieces[randomIndex].xCoord;
+                int column = pieces[randomIndex].yCoord;
 
                 switch (direction)
                 {
                     case 0:
-                        if (TileIsValid(new Vector2(row + 1, column), pieces[randomIndex], false))
+                        if (TileIsValid(row + 1, column, pieces[randomIndex], false))
                         {
                             BoardState possibleBoardState = this.GenerateChildOfBoardState();
-                            possibleBoardState.PlacePiece(new Vector2(row + 1, column), pieces[randomIndex], false);
+                            possibleBoardState.PlacePiece(row + 1, column, pieces[randomIndex], false);
                             //ResetInfo();
                             return possibleBoardState;
                         }
                         break;
                     case 1:
-                        if (TileIsValid(new Vector2(row - 1, column), pieces[randomIndex], false))
+                        if (TileIsValid(row - 1, column, pieces[randomIndex], false))
                         {
                             BoardState possibleBoardState = this.GenerateChildOfBoardState();
-                            possibleBoardState.PlacePiece(new Vector2(row - 1, column), pieces[randomIndex], false);
+                            possibleBoardState.PlacePiece(row - 1, column, pieces[randomIndex], false);
                             //ResetInfo();
                             return possibleBoardState;
                         }
                         break;
                     case 2:
-                        if (TileIsValid(new Vector2(row, column + 1), pieces[randomIndex], false))
+                        if (TileIsValid(row, column + 1, pieces[randomIndex], false))
                         {
                             BoardState possibleBoardState = this.GenerateChildOfBoardState();
-                            possibleBoardState.PlacePiece(new Vector2(row, column + 1), pieces[randomIndex], false);
+                            possibleBoardState.PlacePiece(row, column + 1, pieces[randomIndex], false);
                             //ResetInfo();
                             return possibleBoardState;
                         }
                         break;
                     case 3:
-                        if (TileIsValid(new Vector2(row, column - 1), pieces[randomIndex], false))
+                        if (TileIsValid(row, column - 1, pieces[randomIndex], false))
                         {
                             BoardState possibleBoardState = this.GenerateChildOfBoardState();
-                            possibleBoardState.PlacePiece(new Vector2(row, column - 1), pieces[randomIndex], false);
+                            possibleBoardState.PlacePiece(row, column - 1, pieces[randomIndex], false);
                             //ResetInfo();
                             return possibleBoardState;
                         }

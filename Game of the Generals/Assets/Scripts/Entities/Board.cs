@@ -33,7 +33,7 @@ public class Board : MonoBehaviour
 
     private bool runningMCTS = false;
 
-    private void Start()
+    /*private void Start()
     {
         Vector3 extents = SR.bounds.extents;
 
@@ -340,5 +340,5 @@ public class Board : MonoBehaviour
 
             Instantiate(testObject, GetCenterTilePosition(possibleCoords), Quaternion.identity);
         }
-    }
+    }*/
 }

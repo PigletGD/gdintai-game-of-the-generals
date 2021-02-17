@@ -32,7 +32,7 @@ public class BoardManager : MonoBehaviour
 
     private bool runningMCTS = false;
 
-    private ComputerHandler CH = new ComputerHandler();
+    private ComputerHandler CH = null;
 
     // Start is called before the first frame update
     void Start()
@@ -40,11 +40,20 @@ public class BoardManager : MonoBehaviour
         InitializeBounds();
 
         GenerateInitialBoard();
+
+        CH = new ComputerHandler(SR.bounds.extents);
     }
 
     public void ClickedSetupButton()
     {
-        if (currentBoard.board.Count >= 21) StartGame();
+        int count = 0;
+
+        for (int x = 0; x < 9; x++)
+            for (int y = 0; y < 8; y++)
+                if (currentBoard.board[x, y] != null)
+                    count++;
+
+        if (count >= 21) StartGame();
         else RandomPlayerSetup();
     }
 
@@ -84,8 +93,7 @@ public class BoardManager : MonoBehaviour
     private void GenerateInitialBoard()
     {
         currentBoard = new BoardState(null, new List<BoardState>(),
-                                      new Dictionary<string, Piece>(),
-                                      playerPieces, computerPieces,
+                                      null, playerPieces, computerPieces,
                                       new List<Piece>(), new List<Piece>(),
                                       SearchForFlag(computerPieces),
                                       true);
@@ -115,8 +123,8 @@ public class BoardManager : MonoBehaviour
     {
         foreach (Piece piece in pieces)
         {
-            if (piece.tileCoordinates.x >= 0)
-                piece.lastPosition = GetCenterTilePosition(piece.tileCoordinates);
+            if (piece.xCoord >= 0)
+                piece.lastPosition = GetCenterTilePosition(piece.xCoord, piece.yCoord);
             
             piece.transform.position = piece.lastPosition;
         }
@@ -148,18 +156,18 @@ public class BoardManager : MonoBehaviour
 
     private void SetPiecePositionOnBoard(Piece piece)
     {
-        if (piece.tileCoordinates.x >= 0)
-            piece.lastPosition = GetCenterTilePosition(piece.tileCoordinates);
+        if (piece.xCoord >= 0)
+            piece.lastPosition = GetCenterTilePosition(piece.xCoord, piece.yCoord);
 
         piece.transform.position = piece.lastPosition;
     }
 
-    private Vector3 GetCenterTilePosition(Vector2 tileCoordinates)
+    private Vector3 GetCenterTilePosition(int x, int y)
     {
         Vector3 centerPosition = Vector3.zero;
 
-        centerPosition.x = ((-spriteWidth * 0.5f) + (tileWidth * 0.5f)) + (tileWidth * tileCoordinates.x);
-        centerPosition.y = ((-spriteHeight * 0.5f) + (tileHeight * 0.5f)) + (tileHeight * tileCoordinates.y);
+        centerPosition.x = ((-spriteWidth * 0.5f) + (tileWidth * 0.5f)) + (tileWidth * x);
+        centerPosition.y = ((-spriteHeight * 0.5f) + (tileHeight * 0.5f)) + (tileHeight * y);
 
         return centerPosition;
     }
@@ -176,23 +184,23 @@ public class BoardManager : MonoBehaviour
         if (mouseX == boardWidth) mouseX--;
         if (mouseY == boardHeight) mouseY--;
 
-        Vector2 tileCoordinates = new Vector2(mouseX, mouseY);
-
-        if (currentBoard.TileIsValid(tileCoordinates, selectedPiece, settingUp))
+        if (currentBoard.TileIsValid(mouseX, mouseY, selectedPiece, settingUp))
         {
             if (settingUp)
             {
-                currentBoard.PlacePiece(tileCoordinates, selectedPiece, settingUp);
+                currentBoard.PlacePiece(mouseX, mouseY, selectedPiece, settingUp);
                 SetPiecePositionOnBoard(selectedPiece);
             }
             else
             {
                 currentBoard = currentBoard.GenerateChildOfBoardState();
-                currentBoard.PlacePiece(tileCoordinates, selectedPiece, settingUp);
+                currentBoard.PlacePiece(mouseX, mouseY, selectedPiece, settingUp);
                 currentBoard.ResetInfo();
                 SetAllPiecePositions();
                 currentBoard.AddAllPossibleFutureBoardStates();
                 Debug.Log("SET UP AVAILABLE COMPUTER VALID MOVES");
+
+                //StartCoroutine(CH.CInitiateMCTS(currentBoard));
                 currentBoard = CH.InitiateMCTS(currentBoard);
                 currentBoard.ResetInfo();
                 SetAllPiecePositions();
@@ -200,7 +208,7 @@ public class BoardManager : MonoBehaviour
         }
         else Debug.Log("Is Invalid");
 
-        if (settingUp && currentBoard.board.Count >= 21) onAllPlayerPiecesOnBoard.Raise();
+        if (settingUp && currentBoard.board.Length >= 21) onAllPlayerPiecesOnBoard.Raise();
     }
     
     /* PLAYER FUNCTIONS END */

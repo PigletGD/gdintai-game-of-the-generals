@@ -5,8 +5,8 @@ public class BoardEvaluator
 {
     public BoardState toEvaluate = null;
 
-    public static float OFFENSIVE_MULTIPLIER = 3.0f;
-    public static float DEFENSE_DEDUCTION = 2.0f;
+    public static float OFFENSIVE_MULTIPLIER = 2.0f;
+    public static float DEFENSE_DEDUCTION = 3.0f;
     public static float OPENNESS_VALUE = 5.0f;
     public static float WIN_LOSS_VALUE = 99999.0f;
 
@@ -40,70 +40,65 @@ public class BoardEvaluator
 
     public float ComputeScore(Piece computingPiece)
     {
-        float withinEnemyTerritory = 1;
         float forwardValue;
 
         if (computingPiece.playerPiece)
-        {
-            forwardValue = computingPiece.tileCoordinates.y * computingPiece.pieceValue * 0.5f;
-
-            if (computingPiece.tileCoordinates.y > 3)
-                withinEnemyTerritory = OFFENSIVE_MULTIPLIER;
-        }
+            forwardValue = computingPiece.yCoord;
         else
-        {
-            forwardValue = (7 - computingPiece.tileCoordinates.y) * computingPiece.pieceValue * 0.5f;
-
-            if (computingPiece.tileCoordinates.y < 4)
-                withinEnemyTerritory = OFFENSIVE_MULTIPLIER;
-        }
+            forwardValue = (7 - computingPiece.yCoord);
 
         int numAdjacentPieces = 0;
         float numOpenSpaces = 0;
 
-        Vector2 pieceCoordinates = computingPiece.tileCoordinates;
+        int x = computingPiece.xCoord;
+        int y = computingPiece.yCoord;
 
-        string key;
-
-        pieceCoordinates.x++;
-        key = toEvaluate.GenerateKey(pieceCoordinates);
-        if (toEvaluate.board.ContainsKey(key))
+        x++;
+        if (x < 9)
         {
-            if (toEvaluate.board[key].playerPiece != computingPiece.playerPiece)
-                numAdjacentPieces++;
+            if (toEvaluate.board[x, y] != null)
+            {
+                if (toEvaluate.board[x, y].playerPiece != computingPiece.playerPiece)
+                    numAdjacentPieces++;
+            }
+            else numOpenSpaces++;
         }
-        else numOpenSpaces++;
 
-
-        pieceCoordinates.x -= 2;
-        key = toEvaluate.GenerateKey(pieceCoordinates);
-        if (toEvaluate.board.ContainsKey(key))
+        x -= 2;
+        if (x >= 0)
         {
-            if (toEvaluate.board[key].playerPiece != computingPiece.playerPiece)
-                numAdjacentPieces++;
+            if (toEvaluate.board[x, y] != null)
+            {
+                if (toEvaluate.board[x, y].playerPiece != computingPiece.playerPiece)
+                    numAdjacentPieces++;
+            }
+            else numOpenSpaces++;
         }
-        else numOpenSpaces++;
 
-        pieceCoordinates.x++;
-        pieceCoordinates.y++;
-        key = toEvaluate.GenerateKey(pieceCoordinates);
-        if (toEvaluate.board.ContainsKey(key))
+        x++;
+        y++;
+        if (y < 8)
         {
-            if (toEvaluate.board[key].playerPiece != computingPiece.playerPiece)
-                numAdjacentPieces++;
+            if (toEvaluate.board[x, y] != null)
+            {
+                if (toEvaluate.board[x, y].playerPiece != computingPiece.playerPiece)
+                    numAdjacentPieces++;
+            }
+            else numOpenSpaces++;
         }
-        else numOpenSpaces++;
 
-        pieceCoordinates.y -= 2;
-        key = toEvaluate.GenerateKey(pieceCoordinates);
-        if (toEvaluate.board.ContainsKey(key))
+        y -= 2;
+        if (y >= 0)
         {
-            if (toEvaluate.board[key].playerPiece != computingPiece.playerPiece)
-                numAdjacentPieces++;
+            if (toEvaluate.board[x, y] != null)
+            {
+                if (toEvaluate.board[x, y].playerPiece != computingPiece.playerPiece)
+                    numAdjacentPieces++;
+            }
+            else numOpenSpaces++;
         }
-        else numOpenSpaces++;
 
-        float offensiveness = !toEvaluate.playerTurn ? 0 : ComputeOffensiveness(computingPiece.pieceValue, withinEnemyTerritory, numAdjacentPieces, forwardValue);
+        float offensiveness = !toEvaluate.playerTurn ? 0 : ComputeOffensiveness(computingPiece.pieceValue, numAdjacentPieces, forwardValue);
         float openess = ComputeOpeness(computingPiece.pieceValue, numOpenSpaces);
         float defensiveness = ComputeDefensiveness(computingPiece.pieceValue, numAdjacentPieces);
 
@@ -112,16 +107,16 @@ public class BoardEvaluator
         return pieceScore;
     }
 
-    public float ComputeOffensiveness(float pieceValue, float withinEnemyTerritory, float numAdjacentPieces, float forwardValue)
+    public float ComputeOffensiveness(float pieceValue, float numAdjacentPieces, float forwardValue)
     {
-        float offensiveScore = (pieceValue * withinEnemyTerritory * numAdjacentPieces) + forwardValue;
+        float offensiveScore = pieceValue * numAdjacentPieces * forwardValue;
 
         return offensiveScore;
     }
 
     public float ComputeOpeness(float pieceValue, float numOpenSpaces)
     {
-        float openessScore = (pieceValue * (4 - numOpenSpaces)) + (OPENNESS_VALUE * numOpenSpaces);
+        float openessScore = pieceValue * OPENNESS_VALUE * numOpenSpaces;
 
         return openessScore;
     }
@@ -135,34 +130,36 @@ public class BoardEvaluator
 
     public bool FlagIsAtRisk()
     {
-        Vector2 pieceCoordinates = toEvaluate.computerFlag.tileCoordinates;
+        int x = toEvaluate.computerFlag.xCoord;
+        int y = toEvaluate.computerFlag.yCoord;
 
         string key;
 
-        pieceCoordinates.x++;
-        key = toEvaluate.GenerateKey(pieceCoordinates);
-        if (toEvaluate.board.ContainsKey(key))
-            if (toEvaluate.board[key].playerPiece != toEvaluate.computerFlag.playerPiece)
-                return true;
+        x++;
+        if (x < 9)
+            if (toEvaluate.board[x, y] != null)
+                if (toEvaluate.board[x, y].playerPiece != toEvaluate.computerFlag.playerPiece)
+                    return true;
 
-        pieceCoordinates.x -= 2;
-        key = toEvaluate.GenerateKey(pieceCoordinates);
-        if (toEvaluate.board.ContainsKey(key))
-            if (toEvaluate.board[key].playerPiece != toEvaluate.computerFlag.playerPiece)
-                return true;
 
-        pieceCoordinates.x++;
-        pieceCoordinates.y++;
-        key = toEvaluate.GenerateKey(pieceCoordinates);
-        if (toEvaluate.board.ContainsKey(key))
-            if (toEvaluate.board[key].playerPiece != toEvaluate.computerFlag.playerPiece)
-                return true;
+        x -= 2;
+        if (x >= 0)
+            if (toEvaluate.board[x, y] != null)
+                if (toEvaluate.board[x, y].playerPiece != toEvaluate.computerFlag.playerPiece)
+                    return true;
 
-        pieceCoordinates.y -= 2;
-        key = toEvaluate.GenerateKey(pieceCoordinates);
-        if (toEvaluate.board.ContainsKey(key))
-            if (toEvaluate.board[key].playerPiece != toEvaluate.computerFlag.playerPiece)
-                return true;
+        x++;
+        y++;
+        if (y < 8)
+            if (toEvaluate.board[x, y] != null)
+                if (toEvaluate.board[x, y].playerPiece != toEvaluate.computerFlag.playerPiece)
+                    return true;
+
+        y -= 2;
+        if (y >= 0)
+            if (toEvaluate.board[x, y] != null)
+                if (toEvaluate.board[x, y].playerPiece != toEvaluate.computerFlag.playerPiece)
+                    return true;
 
         return false;
     }

@@ -6,7 +6,8 @@ public class Piece : MonoBehaviour
     [SerializeField] private int pieceID = -1;
     [SerializeField] public bool playerPiece = false;
     [SerializeField] public bool isDead = false;
-    [SerializeField] public Vector2 tileCoordinates = Vector2.zero;
+    [SerializeField] public int xCoord = -1;
+    [SerializeField] public int yCoord = -1;
     [SerializeField] public float pieceValue = 0.0f;
     [HideInInspector] public Vector3 lastPosition = Vector3.zero;
 

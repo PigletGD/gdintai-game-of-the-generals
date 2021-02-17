@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ComputerHandler
 {
     private BoardState currentBoard;
     private BoardState rootBoard;
+    private BoardManager BM;
 
     private BoardEvaluator evaluator;
 
@@ -12,12 +14,20 @@ public class ComputerHandler
     private int depthLimit = 2;
     private int currentDepth = 0;
 
-    public ComputerHandler()
+    private float spriteWidth = 0.0f;
+    private float spriteHeight = 0.0f;
+
+    private float tileWidth = 0.0f;
+    private float tileHeight = 0.0f;
+
+    public ComputerHandler(Vector3 extents)
     {
         currentBoard = null;
         rootBoard = null;
 
         evaluator = new BoardEvaluator();
+
+        InitializeBounds(extents);
     }
 
     public BoardState InitiateMCTS(BoardState boardToSearch)
@@ -29,7 +39,7 @@ public class ComputerHandler
         List<BoardState> available = boardToSearch.childrenBoard;
 
         foreach (BoardState boardState in available)
-        {
+        {            
             evaluator.Evaluate(boardState);
 
             boardState.AddAllPossibleFutureBoardStates();
@@ -73,6 +83,69 @@ public class ComputerHandler
         Debug.Log($"Average Score: {averageScore / available.Count}");
 
         return available[index];
+    }
+
+    public IEnumerator CInitiateMCTS(BoardState boardToSearch)
+    {
+        float previousTime = Time.time;
+
+        currentBoard = rootBoard = boardToSearch;
+
+        List<BoardState> available = boardToSearch.childrenBoard;
+
+        foreach (BoardState boardState in available)
+        {
+            evaluator.Evaluate(boardState);
+
+            SetAllPiecePositions(boardState);
+
+            yield return new WaitForSeconds(1f);
+
+            boardState.AddAllPossibleFutureBoardStates();
+
+            foreach (BoardState childBoard in boardState.childrenBoard)
+            {
+                evaluator.Evaluate(childBoard);
+
+                SetAllPiecePositions(childBoard);
+
+                yield return new WaitForSeconds(1f);
+            }
+        }
+
+        int index = -1;
+        float highestScore = -999999999;
+        float averageScore = 0;
+
+        for (int i = 0; i < available.Count; i++)
+        {
+            float compScore = 0;
+            compScore = available[i].evaluationScore;
+
+            float playerAverage = 0;
+            foreach (BoardState child in available[i].childrenBoard)
+            {
+                playerAverage += child.evaluationScore;
+            }
+
+            playerAverage /= available[i].childrenBoard.Count;
+
+            float score = compScore - playerAverage;
+            averageScore += score;
+
+            //Debug.Log($"Index {i} Score: {score} Is Player Turn: {available[i].playerTurn}");
+
+            if (score > highestScore)
+            {
+                highestScore = score;
+                index = i;
+            }
+        }
+
+        Debug.Log($"Highest Index {index} Score: {highestScore}");
+        Debug.Log($"Average Score: {averageScore / available.Count}");
+
+        //return available[index];
     }
 
     public BoardState AltInitiateMCTS(BoardState boardToSearch)
@@ -215,5 +288,78 @@ public class ComputerHandler
             Debug.Log("Found Root");
         else if (currentState.parentBoard == null)
             Debug.Log("Failed to find original state");*/
+    }
+
+    //Temp
+
+    private void SetAllPiecePositions(BoardState currentBoard)
+    {
+        SetPiecePositionsOnBoard(currentBoard.alivePlayerPieces);
+        SetPiecePositionsOnBoard(currentBoard.aliveComputerPieces);
+
+        SetPiecePositionsDead(currentBoard.deadPlayerPieces);
+        SetPiecePositionsDead(currentBoard.deadComputerPieces);
+    }
+
+    private void SetPiecePositionsOnBoard(List<Piece> pieces)
+    {
+        foreach (Piece piece in pieces)
+        {
+            if (piece.xCoord >= 0)
+                piece.lastPosition = GetCenterTilePosition(piece.xCoord, piece.yCoord);
+
+            piece.transform.position = piece.lastPosition;
+        }
+    }
+
+    private void SetPiecePositionsDead(List<Piece> pieces)
+    {
+        if (pieces.Count <= 0) return;
+
+        int modifier = pieces[0].playerPiece ? -1 : 1;
+
+        for (int i = 0; i < pieces.Count; i++)
+        {
+            Vector3 deadPosition = Vector3.zero;
+
+            int row = i / 3;
+            int col = i % 3;
+
+            if (col == 0) deadPosition.x = 8.3f * modifier;
+            else if (col == 1) deadPosition.x = 7.2f * modifier;
+            else deadPosition.x = 6.1f * modifier;
+
+            deadPosition.y = 3.5f - row;
+
+            pieces[i].lastPosition = deadPosition;
+            pieces[i].transform.position = deadPosition;
+        }
+    }
+
+    private void SetPiecePositionOnBoard(Piece piece)
+    {
+        if (piece.xCoord >= 0)
+            piece.lastPosition = GetCenterTilePosition(piece.xCoord, piece.yCoord);
+
+        piece.transform.position = piece.lastPosition;
+    }
+
+    private Vector3 GetCenterTilePosition(int x, int y)
+    {
+        Vector3 centerPosition = Vector3.zero;
+
+        centerPosition.x = ((-spriteWidth * 0.5f) + (tileWidth * 0.5f)) + (tileWidth * x);
+        centerPosition.y = ((-spriteHeight * 0.5f) + (tileHeight * 0.5f)) + (tileHeight * y);
+
+        return centerPosition;
+    }
+
+    private void InitializeBounds(Vector3 extents)
+    {
+        spriteWidth = extents.x * 2.0f;
+        spriteHeight = extents.y * 2.0f;
+
+        tileWidth = spriteWidth / 9;
+        tileHeight = spriteHeight / 8;
     }
 }
