@@ -22,7 +22,6 @@ public class BoardState
 
     public bool atTerminalState;
     public bool playerWon;
-
     public BoardState(BoardState newParent, List<BoardState> newChildren, Piece[,] newBoard, List<Piece> newPlayers, List<Piece> newComputer, List<Piece> newDeadPlayers, List<Piece> newDeadComputer, Piece newComputerFlag, bool newTurn)
     {
         parentBoard = newParent;
