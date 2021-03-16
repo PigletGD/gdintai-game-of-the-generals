@@ -23,17 +23,22 @@ public class BoardEvaluator
 
         float computedScore = 0;
 
+        bool flagMissing = true;
+
         List<Piece> pieces;
         if (!toEvaluate.playerTurn) pieces = toEvaluate.alivePlayerPieces;
         else pieces = toEvaluate.aliveComputerPieces;
 
         foreach (Piece piece in pieces)
         {
+            if (piece.pieceType == PieceType.Flag)
+                flagMissing = false;
+
             float pieceScore = ComputeScore(piece);
             computedScore += pieceScore;
         }
 
-        if (toEvaluate.playerTurn && FlagIsAtRisk()) computedScore = -WIN_LOSS_VALUE;
+        if (flagMissing || FlagIsAtRisk()) computedScore = -WIN_LOSS_VALUE;
 
         toEvaluate.evaluationScore = computedScore;
     }
@@ -42,10 +47,8 @@ public class BoardEvaluator
     {
         float forwardValue;
 
-        if (computingPiece.playerPiece)
-            forwardValue = computingPiece.yCoord;
-        else
-            forwardValue = (7 - computingPiece.yCoord);
+        if (computingPiece.playerPiece) forwardValue = computingPiece.yCoord;
+        else forwardValue = (7 - computingPiece.yCoord);
 
         int numAdjacentPieces = 0;
         float numOpenSpaces = 0;
@@ -109,7 +112,7 @@ public class BoardEvaluator
 
     public float ComputeOffensiveness(float pieceValue, float numAdjacentPieces, float forwardValue)
     {
-        float offensiveScore = pieceValue * numAdjacentPieces * forwardValue;
+        float offensiveScore = pieceValue * OFFENSIVE_MULTIPLIER * numAdjacentPieces * forwardValue;
 
         return offensiveScore;
     }
@@ -130,35 +133,39 @@ public class BoardEvaluator
 
     public bool FlagIsAtRisk()
     {
-        int x = toEvaluate.computerFlag.xCoord;
-        int y = toEvaluate.computerFlag.yCoord;
+        Piece flag;
+        if (!toEvaluate.playerTurn) flag = toEvaluate.playerFlag;
+        else flag = toEvaluate.computerFlag;
+
+        int x = flag.xCoord;
+        int y = flag.yCoord;
 
         string key;
 
         x++;
         if (x < 9)
             if (toEvaluate.board[x, y] != null)
-                if (toEvaluate.board[x, y].playerPiece != toEvaluate.computerFlag.playerPiece)
+                if (toEvaluate.board[x, y].playerPiece != flag.playerPiece)
                     return true;
 
 
         x -= 2;
         if (x >= 0)
             if (toEvaluate.board[x, y] != null)
-                if (toEvaluate.board[x, y].playerPiece != toEvaluate.computerFlag.playerPiece)
+                if (toEvaluate.board[x, y].playerPiece != flag.playerPiece)
                     return true;
 
         x++;
         y++;
         if (y < 8)
             if (toEvaluate.board[x, y] != null)
-                if (toEvaluate.board[x, y].playerPiece != toEvaluate.computerFlag.playerPiece)
+                if (toEvaluate.board[x, y].playerPiece != flag.playerPiece)
                     return true;
 
         y -= 2;
         if (y >= 0)
             if (toEvaluate.board[x, y] != null)
-                if (toEvaluate.board[x, y].playerPiece != toEvaluate.computerFlag.playerPiece)
+                if (toEvaluate.board[x, y].playerPiece != flag.playerPiece)
                     return true;
 
         return false;

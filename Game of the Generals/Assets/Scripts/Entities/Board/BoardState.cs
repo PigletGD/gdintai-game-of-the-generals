@@ -22,7 +22,7 @@ public class BoardState
 
     public bool atTerminalState;
     public bool playerWon;
-    public BoardState(BoardState newParent, List<BoardState> newChildren, Piece[,] newBoard, List<Piece> newPlayers, List<Piece> newComputer, List<Piece> newDeadPlayers, List<Piece> newDeadComputer, Piece newComputerFlag, bool newTurn)
+    public BoardState(BoardState newParent, List<BoardState> newChildren, Piece[,] newBoard, List<Piece> newPlayers, List<Piece> newComputer, List<Piece> newDeadPlayers, List<Piece> newDeadComputer, Piece newPlayerFlag, Piece newComputerFlag, bool newTurn)
     {
         parentBoard = newParent;
         childrenBoard = new List<BoardState>(newChildren);
@@ -46,6 +46,7 @@ public class BoardState
         aliveComputerPieces = new List<Piece>(newComputer);
         deadPlayerPieces = new List<Piece>(newDeadPlayers);
         deadComputerPieces = new List<Piece>(newDeadComputer);
+        playerFlag = newPlayerFlag;
         computerFlag = newComputerFlag;
         playerTurn = newTurn;
         evaluationScore = 0.0f;
@@ -55,7 +56,7 @@ public class BoardState
 
     public BoardState GenerateChildOfBoardState()
     {
-        BoardState child = new BoardState(this, new List<BoardState>(), board, alivePlayerPieces, aliveComputerPieces, deadPlayerPieces, deadComputerPieces, computerFlag, !playerTurn);
+        BoardState child = new BoardState(this, new List<BoardState>(), board, alivePlayerPieces, aliveComputerPieces, deadPlayerPieces, deadComputerPieces, playerFlag, computerFlag, !playerTurn);
         childrenBoard.Add(child);
         return child;
     }
@@ -97,6 +98,16 @@ public class BoardState
             PlacePiece(randX, randY, piece, true);
 
             piece.gameObject.SetActive(true);
+        }
+    }
+
+    public void SetupBoardComputer(Vector2[] positions)
+    {
+        for (int i = 0; i < aliveComputerPieces.Count; i++)
+        {
+            PlacePiece((int)positions[i].x, (int)positions[i].y, aliveComputerPieces[i], true);
+
+            aliveComputerPieces[i].gameObject.SetActive(true);
         }
     }
 

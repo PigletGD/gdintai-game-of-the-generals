@@ -30,10 +30,8 @@ public class ComputerHandler
         InitializeBounds(extents);
     }
 
-    public BoardState InitiateMCTS(BoardState boardToSearch)
+    public BoardState InitiateSearch(BoardState boardToSearch)
     {
-        float previousTime = Time.time;
-
         currentBoard = rootBoard = boardToSearch;
 
         List<BoardState> available = boardToSearch.childrenBoard;
@@ -85,10 +83,8 @@ public class ComputerHandler
         return available[index];
     }
 
-    public IEnumerator CInitiateMCTS(BoardState boardToSearch)
+    public IEnumerator CInitiateSearch(BoardState boardToSearch)
     {
-        float previousTime = Time.time;
-
         currentBoard = rootBoard = boardToSearch;
 
         List<BoardState> available = boardToSearch.childrenBoard;
@@ -148,7 +144,7 @@ public class ComputerHandler
         //return available[index];
     }
 
-    public BoardState AltInitiateMCTS(BoardState boardToSearch)
+    public BoardState AltInitiateSearch(BoardState boardToSearch)
     {
         currentBoard = rootBoard = boardToSearch;
 

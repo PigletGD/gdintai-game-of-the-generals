@@ -25,6 +25,8 @@ public class BoardManager : MonoBehaviour
 
     [SerializeField] private GameObject testObject = null;
 
+    [SerializeField] private List<Positions> computerSetups = null;
+
     public List<Piece> playerPieces;
     public List<Piece> computerPieces;
 
@@ -68,7 +70,9 @@ public class BoardManager : MonoBehaviour
 
     private void StartGame()
     {
-        currentBoard.SetupBoardRandomComputer();
+        //currentBoard.SetupBoardRandomComputer();
+
+        currentBoard.SetupBoardComputer(computerSetups[Random.Range(0, computerSetups.Count)].PiecePositions);
 
         SetAllPiecePositions();
 
@@ -95,6 +99,7 @@ public class BoardManager : MonoBehaviour
         currentBoard = new BoardState(null, new List<BoardState>(),
                                       null, playerPieces, computerPieces,
                                       new List<Piece>(), new List<Piece>(),
+                                      SearchForFlag(playerPieces),
                                       SearchForFlag(computerPieces),
                                       true);
     }
@@ -202,7 +207,7 @@ public class BoardManager : MonoBehaviour
                 Debug.Log("SET UP AVAILABLE COMPUTER VALID MOVES");
 
                 //StartCoroutine(CH.CInitiateMCTS(currentBoard));
-                currentBoard = CH.InitiateMCTS(currentBoard);
+                currentBoard = CH.InitiateSearch(currentBoard);
                 currentBoard.ResetInfo();
                 SetAllPiecePositions();
             }
