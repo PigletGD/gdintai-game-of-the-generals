@@ -70,8 +70,6 @@ public class BoardManager : MonoBehaviour
 
     private void StartGame()
     {
-        //currentBoard.SetupBoardRandomComputer();
-
         currentBoard.SetupBoardComputer(computerSetups[Random.Range(0, computerSetups.Count)].PiecePositions);
 
         SetAllPiecePositions();
@@ -213,7 +211,16 @@ public class BoardManager : MonoBehaviour
             }
         }
 
-        if (settingUp && currentBoard.board.Length >= 21) onAllPlayerPiecesOnBoard.Raise();
+        //DebugShowBoard();
+
+        int count = 0;
+
+        for (int x = 0; x < 9; x++)
+            for (int y = 0; y < 8; y++)
+                if (currentBoard.board[x, y] != null)
+                    count++;
+
+        if (settingUp && count >= 21) onAllPlayerPiecesOnBoard.Raise();
     }
     
     /* PLAYER FUNCTIONS END */
@@ -232,5 +239,25 @@ public class BoardManager : MonoBehaviour
         currentBoard.ResetInfo();
 
         SetAllPiecePositions();
+    }
+
+    private void DebugShowBoard()
+    {
+        Debug.Log("Debug Start");
+
+        string debug = "";
+
+        for(int i = 7; i >= 0; i--)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                int value = currentBoard.board[j, i] != null ? 1 : 0;
+                debug += value.ToString() + " ";
+            }
+
+            Debug.Log(debug);
+
+            debug = "";
+        }
     }
 }

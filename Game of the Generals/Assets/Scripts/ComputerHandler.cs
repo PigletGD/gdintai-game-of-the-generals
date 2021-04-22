@@ -54,8 +54,7 @@ public class ComputerHandler
 
         for (int i  = 0; i < available.Count; i++)
         {
-            float compScore = 0;
-            compScore = available[i].evaluationScore;
+            float compScore = available[i].evaluationScore;
 
             float playerAverage = 0;
             foreach (BoardState child in available[i].childrenBoard)
@@ -63,7 +62,7 @@ public class ComputerHandler
                 playerAverage += child.evaluationScore;
             }
 
-            playerAverage /= available[i].childrenBoard.Count;
+            playerAverage /= (available[i].childrenBoard.Count * 0.5f);
 
             float score = compScore - playerAverage;
             averageScore += score;

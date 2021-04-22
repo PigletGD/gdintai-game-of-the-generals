@@ -172,6 +172,8 @@ public class BoardState
 
     private void TileSwap(int x, int y, Piece selectedPiece)
     {
+        Debug.Log("Swapping");
+
         // Gets piece already on board
         Piece occupiedPiece = board[x, y];
 
@@ -190,8 +192,9 @@ public class BoardState
         }
 
         // Places selected piece in occupied piece's position
-        board[x, y] = null;
-        SetTileInfo(x, y, selectedPiece);
+        selectedPiece.xCoord = x;
+        selectedPiece.yCoord = y;
+        board[x, y] = selectedPiece;
     }
 
     private void PieceContest(Piece attackingPiece, Piece defendingPiece)

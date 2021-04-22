@@ -8,7 +8,7 @@ public class BoardEvaluator
     public static float OFFENSIVE_MULTIPLIER = 2.0f;
     public static float DEFENSE_DEDUCTION = 3.0f;
     public static float OPENNESS_VALUE = 5.0f;
-    public static float WIN_LOSS_VALUE = 99999.0f;
+    public static float WIN_LOSS_VALUE = 9999.0f;
 
     public BoardEvaluator()
     {
@@ -20,6 +20,17 @@ public class BoardEvaluator
         toEvaluate = board;
 
         toEvaluate.ResetInfo();
+
+        if (FlagIsAtRisk())
+        {
+            toEvaluate.evaluationScore = -WIN_LOSS_VALUE;
+            return;
+        }
+        else if (EnemyFlagCaptured())
+        {
+            toEvaluate.evaluationScore = WIN_LOSS_VALUE;
+            return;
+        }
 
         float computedScore = 0;
 
@@ -38,7 +49,7 @@ public class BoardEvaluator
             computedScore += pieceScore;
         }
 
-        if (flagMissing || FlagIsAtRisk()) computedScore = -WIN_LOSS_VALUE;
+        if (flagMissing) computedScore = -WIN_LOSS_VALUE;
 
         toEvaluate.evaluationScore = computedScore;
     }
@@ -169,5 +180,20 @@ public class BoardEvaluator
                     return true;
 
         return false;
+    }
+
+    private bool EnemyFlagCaptured()
+    {
+        List<Piece> pieces;
+        if (toEvaluate.playerTurn) pieces = toEvaluate.alivePlayerPieces;
+        else pieces = toEvaluate.aliveComputerPieces;
+
+        foreach (Piece piece in pieces)
+        {
+            if (piece.pieceType == PieceType.Flag)
+                return false;
+        }
+
+        return true;
     }
 }
