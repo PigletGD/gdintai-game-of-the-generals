@@ -5,7 +5,6 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private Board boardOLD = null;
     [SerializeField] private BoardManager BM = null;
 
     [SerializeField] private GameObject pauseMenu = null;

@@ -4,7 +4,6 @@ using UnityEngine;
 public class BoardManager : MonoBehaviour
 {
     public BoardState currentBoard = null;
-    BoardState rootBoard = null;
 
     [SerializeField] private SpriteRenderer SR = null;
 
@@ -22,6 +21,7 @@ public class BoardManager : MonoBehaviour
     private int boardHeight = 8;
 
     [SerializeField] private GameEventsSO onAllPlayerPiecesOnBoard = null;
+    [SerializeField] private GameEventsSO onGameOver = null;
 
     [SerializeField] private GameObject testObject = null;
 
@@ -31,8 +31,6 @@ public class BoardManager : MonoBehaviour
     public List<Piece> computerPieces;
 
     public bool settingUp = true;
-
-    private bool runningMCTS = false;
 
     private ComputerHandler CH = null;
 
@@ -73,8 +71,6 @@ public class BoardManager : MonoBehaviour
         currentBoard.SetupBoardComputer(computerSetups[Random.Range(0, computerSetups.Count)].PiecePositions);
 
         SetAllPiecePositions();
-
-        rootBoard = currentBoard;
 
         settingUp = false;
 
@@ -178,8 +174,6 @@ public class BoardManager : MonoBehaviour
     /* PLAYER FUNCTIONS START */
     public void PlacePiece(Vector3 mousePos, Piece selectedPiece)
     {
-        //Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
         // Getting Coordinates
         int mouseX = Mathf.FloorToInt(((mousePos.x + (spriteWidth * 0.5f)) / spriteWidth) * boardWidth);
         int mouseY = Mathf.FloorToInt(((mousePos.y + (spriteHeight * 0.5f)) / spriteHeight) * boardHeight);
@@ -201,13 +195,26 @@ public class BoardManager : MonoBehaviour
                 currentBoard.PlacePiece(mouseX, mouseY, selectedPiece, settingUp);
                 currentBoard.ResetInfo();
                 SetAllPiecePositions();
-                currentBoard.AddAllPossibleFutureBoardStates();
-                Debug.Log("SET UP AVAILABLE COMPUTER VALID MOVES");
+                if (!currentBoard.CheckIfFlagStillAlive())
+                {
+                    onGameOver.Raise();
+                    return;
+                }
 
-                //StartCoroutine(CH.CInitiateMCTS(currentBoard));
+                GM.SwitchTurns();
+
+                currentBoard.AddAllPossibleFutureBoardStates();
+
                 currentBoard = CH.InitiateSearch(currentBoard);
                 currentBoard.ResetInfo();
                 SetAllPiecePositions();
+                if (!currentBoard.CheckIfFlagStillAlive())
+                {
+                    onGameOver.Raise();
+                    return;
+                }
+
+                GM.SwitchTurns();
             }
         }
 

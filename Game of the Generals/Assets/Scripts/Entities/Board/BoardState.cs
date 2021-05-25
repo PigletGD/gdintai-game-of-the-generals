@@ -492,4 +492,19 @@ public class BoardState
 
         return null;
     }
+
+    public bool CheckIfFlagStillAlive()
+    {
+        List<Piece> pieces;
+        if (playerTurn) pieces = deadPlayerPieces;
+        else pieces = deadComputerPieces;
+
+        foreach (Piece piece in pieces)
+        {
+            if (piece.pieceType == PieceType.Flag)
+                return false;
+        }
+
+        return true;
+    }
 }

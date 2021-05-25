@@ -5,9 +5,10 @@ public class BoardEvaluator
 {
     public BoardState toEvaluate = null;
 
-    public static float OFFENSIVE_MULTIPLIER = 2.0f;
+    public static float OFFENSIVE_MULTIPLIER = 7.0f;
     public static float DEFENSE_DEDUCTION = 3.0f;
     public static float OPENNESS_VALUE = 5.0f;
+    public static float ADVANTAGE_BIAS = 50.0f;
     public static float WIN_LOSS_VALUE = 9999.0f;
 
     public BoardEvaluator()
@@ -37,8 +38,17 @@ public class BoardEvaluator
         bool flagMissing = true;
 
         List<Piece> pieces;
-        if (!toEvaluate.playerTurn) pieces = toEvaluate.alivePlayerPieces;
-        else pieces = toEvaluate.aliveComputerPieces;
+        List<Piece> enemies;
+        if (!toEvaluate.playerTurn)
+        {
+            pieces = toEvaluate.alivePlayerPieces;
+            enemies = toEvaluate.aliveComputerPieces;
+        }
+        else
+        {
+            pieces = toEvaluate.aliveComputerPieces;
+            enemies = toEvaluate.alivePlayerPieces;
+        }
 
         foreach (Piece piece in pieces)
         {
@@ -49,8 +59,11 @@ public class BoardEvaluator
             computedScore += pieceScore;
         }
 
+        computedScore /= pieces.Count;
+
         if (flagMissing) computedScore = -WIN_LOSS_VALUE;
 
+        //computedScore += (pieces.Count - enemies.Count) * ADVANTAGE_BIAS;
         toEvaluate.evaluationScore = computedScore;
     }
 
@@ -137,7 +150,7 @@ public class BoardEvaluator
 
     public float ComputeDefensiveness(float pieceValue, float numAdjacentPieces)
     {
-        float defensiveScore = pieceValue - (DEFENSE_DEDUCTION * numAdjacentPieces);
+        float defensiveScore = ((3.5f - pieceValue) / 3.5f) * (DEFENSE_DEDUCTION * numAdjacentPieces);
 
         return defensiveScore;
     }

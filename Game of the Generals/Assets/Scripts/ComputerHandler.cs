@@ -57,12 +57,23 @@ public class ComputerHandler
             float compScore = available[i].evaluationScore;
 
             float playerAverage = 0;
+            float[] highestScores = new float[5] { -99999999, -99999999, -99999999, -99999999, -99999999 };
             foreach (BoardState child in available[i].childrenBoard)
             {
-                playerAverage += child.evaluationScore;
+                for (int j = 0; j < 5; j++)
+                {
+                    if (highestScores[j] < child.evaluationScore)
+                    {
+                        highestScores[j] = child.evaluationScore;
+                        break;
+                    }
+                }
             }
 
-            playerAverage /= (available[i].childrenBoard.Count * 0.5f);
+            for(int j = 0; j < 5; j++)
+                playerAverage += highestScores[j];
+
+            playerAverage /= 5;
 
             float score = compScore - playerAverage;
             averageScore += score;

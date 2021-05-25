@@ -2437,6 +2437,7 @@ GameObject:
   - component: {fileID: 646170746}
   - component: {fileID: 646170745}
   - component: {fileID: 646170747}
+  - component: {fileID: 646170748}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -2456,7 +2457,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b02f192c60e1384a9192756dee02748, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boardOLD: {fileID: 1772723834}
   BM: {fileID: 1772723838}
   pauseMenu: {fileID: 286382246}
   debugButtonText: {fileID: 1047677768}
@@ -2500,6 +2500,34 @@ MonoBehaviour:
       - m_Target: {fileID: 646170745}
         m_TargetAssemblyTypeName: 
         m_MethodName: SwitchTurns
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &646170748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 646170744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcdcc4acf44f07b44995c8dc3c26df6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Event: {fileID: 11400000, guid: 0152d519f21d3ce46b4ca3af72f6df5e, type: 2}
+  Response:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 646170745}
+        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
+        m_MethodName: ShowResults
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -6766,7 +6794,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1772723833}
   - component: {fileID: 1772723832}
-  - component: {fileID: 1772723834}
   - component: {fileID: 1772723835}
   - component: {fileID: 1772723838}
   m_Layer: 9
@@ -6841,71 +6868,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1772723834
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1772723831}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 37e2d1cbf984239419dbc7114919f2fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  alivePlayerPieces:
-  - {fileID: 594638521}
-  - {fileID: 424521936}
-  - {fileID: 1488935243}
-  - {fileID: 22522404}
-  - {fileID: 166268674}
-  - {fileID: 1694278831}
-  - {fileID: 1893276586}
-  - {fileID: 897232632}
-  - {fileID: 721515276}
-  - {fileID: 2099815594}
-  - {fileID: 336922310}
-  - {fileID: 1451024656}
-  - {fileID: 1613172179}
-  - {fileID: 1744669010}
-  - {fileID: 840676407}
-  - {fileID: 1178904495}
-  - {fileID: 556520814}
-  - {fileID: 2021087461}
-  - {fileID: 1377917834}
-  - {fileID: 874929043}
-  - {fileID: 1960954852}
-  aliveComputerPieces:
-  - {fileID: 2108657633}
-  - {fileID: 1717275265}
-  - {fileID: 469809567}
-  - {fileID: 216145115}
-  - {fileID: 1637145864}
-  - {fileID: 500985420}
-  - {fileID: 849169300}
-  - {fileID: 501627465}
-  - {fileID: 1664737224}
-  - {fileID: 297946768}
-  - {fileID: 868919972}
-  - {fileID: 1500154687}
-  - {fileID: 263203888}
-  - {fileID: 862251206}
-  - {fileID: 1686153733}
-  - {fileID: 36561657}
-  - {fileID: 217389131}
-  - {fileID: 1630938334}
-  - {fileID: 1291032230}
-  - {fileID: 1573022877}
-  - {fileID: 1433404492}
-  deadPlayerPieces: []
-  deadComputerPieces: []
-  SR: {fileID: 1772723832}
-  GM: {fileID: 646170745}
-  onTurnEnd: {fileID: 11400000, guid: e1d0081ebbc7e0b439a0ec2f647e98e9, type: 2}
-  onAllPlayerPiecesOnBoard: {fileID: 11400000, guid: 1ea5846fa0df7bd4db13a0cd9413480f,
-    type: 2}
-  testObject: {fileID: 5850632525590931481, guid: 88ad87b6b9aa60845bd358bd8f8be22a,
-    type: 3}
 --- !u!61 &1772723835
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -6949,6 +6911,7 @@ MonoBehaviour:
   onTurnEnd: {fileID: 11400000, guid: e1d0081ebbc7e0b439a0ec2f647e98e9, type: 2}
   onAllPlayerPiecesOnBoard: {fileID: 11400000, guid: 1ea5846fa0df7bd4db13a0cd9413480f,
     type: 2}
+  onGameOver: {fileID: 11400000, guid: 0152d519f21d3ce46b4ca3af72f6df5e, type: 2}
   testObject: {fileID: 5850632525590931481, guid: 88ad87b6b9aa60845bd358bd8f8be22a,
     type: 3}
   computerSetups:
