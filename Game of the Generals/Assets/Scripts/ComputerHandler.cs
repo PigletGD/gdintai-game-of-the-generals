@@ -78,7 +78,6 @@ public class ComputerHandler
             float score = compScore - playerAverage;
             averageScore += score;
 
-            //Debug.Log($"Index {i} Score: {score} Is Player Turn: {available[i].playerTurn}");
 
             if (score > highestScore)
             {
@@ -86,9 +85,6 @@ public class ComputerHandler
                 index = i;
             }
         }
-
-        Debug.Log($"Highest Index {index} Score: {highestScore}");
-        Debug.Log($"Average Score: {averageScore / available.Count}");
 
         return available[index].realBoard;
     }
@@ -147,11 +143,6 @@ public class ComputerHandler
                 index = i;
             }
         }
-
-        Debug.Log($"Highest Index {index} Score: {highestScore}");
-        Debug.Log($"Average Score: {averageScore / available.Count}");
-
-        //return available[index];
     }
 
     public BoardState AltInitiateSearch(BoardState boardToSearch)

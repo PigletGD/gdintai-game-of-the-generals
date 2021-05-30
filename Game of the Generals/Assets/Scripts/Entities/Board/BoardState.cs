@@ -231,8 +231,6 @@ public class BoardState
 
     private void TileSwap(int x, int y, Piece selectedPiece)
     {
-        Debug.Log("Swapping");
-
         // Gets piece already on board
         Piece occupiedPiece = board[x, y];
 
@@ -311,13 +309,24 @@ public class BoardState
         int kills = killList[defendingPiece.pieceID];
         int minRank = (int)((highestRank / 3.0f) * (kills > 3 ? 3 : kills));
 
-        if (kills > 0) Debug.Log(kills);
-
         randomPieceType = (PieceType)Random.Range(minRank, highestRank);
 
         int result = GetContestResult(attackingPiece.pieceType, randomPieceType);
         if (result == 0 || result == 1) return HypotheticalContest(attackingPiece, defendingPiece, randomPieceType);
         
+        return false;
+    }
+
+    public bool HypotheticalContest(Piece attackingPiece, Piece defendingPiece, PieceType randomPieceType)
+    {
+
+        switch (GetContestResult(attackingPiece.pieceType, randomPieceType))
+        {
+            case 0: SplitLoss(attackingPiece, defendingPiece); return true;
+            case 1: AttackerWins(attackingPiece, defendingPiece); return true;
+            case 2: return false;
+        }
+
         return false;
     }
 
@@ -623,8 +632,6 @@ public class BoardState
             indexPasses++;
         } while (indexPasses < pieces.Count);
 
-        Debug.Log("Ran out of possible moves");
-
         return null;
     }
 
@@ -657,30 +664,6 @@ public class BoardState
                 else if (!piece.playerPiece && piece.yCoord == 0) return true;
                 else return false;
             }       
-        }
-
-        return false;
-    }
-
-    public bool HypotheticalContest(Piece attackingPiece, Piece defendingPiece, PieceType randomPieceType)
-    {
-        if (Random.value > 0.35f)
-        {
-            switch (GetContestResult(attackingPiece.pieceType, defendingPiece.pieceType))
-            {
-                case 0: SplitLoss(attackingPiece, defendingPiece); return true;
-                case 1: AttackerWins(attackingPiece, defendingPiece); return true;
-                case 2: return false;
-            }
-        }
-        else
-        {
-            switch (GetContestResult(attackingPiece.pieceType, randomPieceType))
-            {
-                case 0: SplitLoss(attackingPiece, defendingPiece); return true;
-                case 1: AttackerWins(attackingPiece, defendingPiece); return true;
-                case 2: return false;
-            }
         }
 
         return false;
