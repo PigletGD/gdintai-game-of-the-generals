@@ -112,7 +112,7 @@ public class BoardState
 
     public void SetupBoardComputer(BoardSetups setup)
     {
-        int xPos, yPos, rand;
+        int xPos, yPos;
         bool flipped = Random.value > 0.5f ? true : false;
 
 

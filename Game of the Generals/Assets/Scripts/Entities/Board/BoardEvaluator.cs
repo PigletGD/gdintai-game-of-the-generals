@@ -203,7 +203,6 @@ public class BoardEvaluator
     {
         if (computingPiece.pieceType == PieceType.Flag) return 100;
 
-        float chaseScore;
         int closestDistance = 99999;
         for (int i = 1; i < enemies.Count; i++)
         {
@@ -231,8 +230,6 @@ public class BoardEvaluator
 
         int x = flag.xCoord;
         int y = flag.yCoord;
-
-        string key;
 
         x++;
         if (x < 9)

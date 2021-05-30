@@ -10,8 +10,6 @@ public class BoardManager : MonoBehaviour
 
     [SerializeField] private GameManager GM = null;
 
-    [SerializeField] private GameEventsSO onTurnEnd = null;
-
     private float spriteWidth = 0.0f;
     private float spriteHeight = 0.0f;
 
@@ -23,8 +21,6 @@ public class BoardManager : MonoBehaviour
 
     [SerializeField] private GameEventsSO onAllPlayerPiecesOnBoard = null;
     [SerializeField] private GameEventsSO onGameOver = null;
-
-    [SerializeField] private GameObject testObject = null;
 
     [SerializeField] private List<BoardSetups> computerSetups = null;
 
@@ -42,7 +38,7 @@ public class BoardManager : MonoBehaviour
 
         GenerateInitialBoard();
 
-        CH = new ComputerHandler(SR.bounds.extents);
+        CH = new ComputerHandler();
     }
 
     public void ClickedSetupButton()
