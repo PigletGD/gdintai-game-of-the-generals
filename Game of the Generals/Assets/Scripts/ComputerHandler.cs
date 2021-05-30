@@ -90,7 +90,7 @@ public class ComputerHandler
         Debug.Log($"Highest Index {index} Score: {highestScore}");
         Debug.Log($"Average Score: {averageScore / available.Count}");
 
-        return available[index];
+        return available[index].realBoard;
     }
 
     public IEnumerator CInitiateSearch(BoardState boardToSearch)

@@ -1,10 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class BoardState
 {
     public BoardState parentBoard;
+    public BoardState realBoard;
     public List<BoardState> childrenBoard;
 
     public Piece[,] board;
@@ -14,6 +14,8 @@ public class BoardState
     public List<Piece> deadComputerPieces;
     public Piece playerFlag;
     public Piece computerFlag;
+    public List<int> playerKills;
+    public List<int> computerKills;
 
     public bool playerTurn;
     public float evaluationScore;
@@ -22,7 +24,7 @@ public class BoardState
 
     public bool atTerminalState;
     public bool playerWon;
-    public BoardState(BoardState newParent, List<BoardState> newChildren, Piece[,] newBoard, List<Piece> newPlayers, List<Piece> newComputer, List<Piece> newDeadPlayers, List<Piece> newDeadComputer, Piece newPlayerFlag, Piece newComputerFlag, bool newTurn)
+    public BoardState(BoardState newParent, List<BoardState> newChildren, Piece[,] newBoard, List<Piece> newPlayers, List<Piece> newComputer, List<Piece> newDeadPlayers, List<Piece> newDeadComputer, Piece newPlayerFlag, Piece newComputerFlag, List<int> newPlayerKills, List<int> newComputerKills, bool newTurn)
     {
         parentBoard = newParent;
         childrenBoard = new List<BoardState>(newChildren);
@@ -41,7 +43,7 @@ public class BoardState
                 for (int y = 0; y < 8; y++)
                     board[x, y] = null;
         }
-        
+
         alivePlayerPieces = new List<Piece>(newPlayers);
         aliveComputerPieces = new List<Piece>(newComputer);
         deadPlayerPieces = new List<Piece>(newDeadPlayers);
@@ -49,6 +51,8 @@ public class BoardState
         playerFlag = newPlayerFlag;
         computerFlag = newComputerFlag;
         playerTurn = newTurn;
+        playerKills = new List<int>(newPlayerKills);
+        computerKills = new List<int>(newComputerKills);
         evaluationScore = 0.0f;
         atTerminalState = false;
         playerWon = false;
@@ -56,9 +60,14 @@ public class BoardState
 
     public BoardState GenerateChildOfBoardState()
     {
-        BoardState child = new BoardState(this, new List<BoardState>(), board, alivePlayerPieces, aliveComputerPieces, deadPlayerPieces, deadComputerPieces, playerFlag, computerFlag, !playerTurn);
-        childrenBoard.Add(child);
+        BoardState child = new BoardState(this, new List<BoardState>(), board, alivePlayerPieces, aliveComputerPieces, deadPlayerPieces, deadComputerPieces, playerFlag, computerFlag, playerKills, computerKills, !playerTurn);
+        //childrenBoard.Add(child);
         return child;
+    }
+
+    public BoardState GenerateCopyOfBoardState()
+    {
+        return new BoardState(parentBoard, new List<BoardState>(), board, alivePlayerPieces, aliveComputerPieces, deadPlayerPieces, deadComputerPieces, playerFlag, computerFlag, playerKills, computerKills, !playerTurn);
     }
 
     public void SetupBoardRandomPlayer()
@@ -101,13 +110,50 @@ public class BoardState
         }
     }
 
-    public void SetupBoardComputer(Vector2[] positions)
+    public void SetupBoardComputer(BoardSetups setup)
     {
-        for (int i = 0; i < aliveComputerPieces.Count; i++)
-        {
-            PlacePiece((int)positions[i].x, (int)positions[i].y, aliveComputerPieces[i], true);
+        int xPos, yPos, rand;
+        bool flipped = Random.value > 0.5f ? true : false;
 
-            aliveComputerPieces[i].gameObject.SetActive(true);
+
+        foreach (AbsolutePieceInfo api in setup.AbsolutePiecePositions)
+        {
+            xPos = flipped ? 8 - (int)api.position.x : (int)api.position.x;
+            yPos = (int)api.position.y;
+
+            PlacePiece(xPos, yPos, aliveComputerPieces[api.pieceIndex], true);
+
+            aliveComputerPieces[api.pieceIndex].gameObject.SetActive(true);
+        }
+
+        int leftMin = flipped ? 4 : 0;
+        int leftMax = flipped ? 9 : 5;
+        int rightMin = flipped ? 0 : 5;
+        int rightMax = flipped ? 4 : 9;
+
+        SetComputerPiecesOnSide(setup.FrontLeft, leftMin, leftMax, 5);
+        SetComputerPiecesOnSide(setup.FrontRight, rightMin, rightMax, 5);
+        SetComputerPiecesOnSide(setup.MiddleLeft, leftMin, leftMax, 6);
+        SetComputerPiecesOnSide(setup.MiddleRight, rightMin, rightMax, 6);
+        SetComputerPiecesOnSide(setup.BackLeft, leftMin, leftMax, 7);
+        SetComputerPiecesOnSide(setup.BackRight, rightMin, rightMax, 7);
+    }
+
+    void SetComputerPiecesOnSide(int[] side, int minX, int maxX, int yPos){
+        int rand;
+
+        for (int i = 0; i < side.Length; i++)
+        {
+            do
+            {
+                rand = Random.Range(minX, maxX);
+            } while (board[rand, yPos] != null);
+
+            int xPos = rand;
+
+            PlacePiece(xPos, yPos, aliveComputerPieces[side[i]], true);
+
+            aliveComputerPieces[side[i]].gameObject.SetActive(true);
         }
     }
 
@@ -122,6 +168,19 @@ public class BoardState
             if (settingUp) TileSwap(x, y, selectedPiece);
             else PieceContest(selectedPiece, board[x, y]);
         }
+    }
+
+    public bool HypotheticalPlacePiece(int x, int y, Piece selectedPiece)
+    {
+
+        // Set Tile Info
+        if (board[x, y] == null)
+        {
+            SetTileInfo(x, y, selectedPiece);
+            return true;
+        }
+        else
+            return HypotheticalPieceContest(selectedPiece, board[x, y]);
     }
 
     public bool TileIsValid(int x, int y, Piece selectedPiece, bool settingUp)
@@ -204,10 +263,60 @@ public class BoardState
             switch (GetContestResult(attackingPiece.pieceType, defendingPiece.pieceType))
             {
                 case 0: SplitLoss(attackingPiece, defendingPiece); break;
-                case 1: AttackerWins(attackingPiece, defendingPiece); break;
-                case 2: DefenderWins(attackingPiece); break;
+                case 1: AttackerWins(attackingPiece, defendingPiece);
+                    if (attackingPiece.playerPiece) playerKills[attackingPiece.pieceID]++;
+                    else computerKills[attackingPiece.pieceID]++;
+                    break;
+                case 2: DefenderWins(attackingPiece);
+                    if (defendingPiece.playerPiece) playerKills[defendingPiece.pieceID]++;
+                    else computerKills[defendingPiece.pieceID]++;
+                    break;
             }
         }
+    }
+
+    private bool HypotheticalPieceContest(Piece attackingPiece, Piece defendingPiece)
+    {
+        if (defendingPiece.pieceType == PieceType.Flag)
+        {
+            AttackerWins(attackingPiece, defendingPiece);
+            return true;
+        }
+
+        List<Piece> pieceList; List<int> killList;
+        if (attackingPiece.playerPiece)
+        {
+            pieceList = alivePlayerPieces;
+            killList = computerKills;
+        }
+        else
+        {
+            pieceList = aliveComputerPieces;
+            killList = playerKills;
+        }
+
+        int highestRank = -1;
+        for (int i = 0; i < pieceList.Count; i++)
+        {
+            if (highestRank < (int)pieceList[i].pieceType)
+                highestRank = (int)pieceList[i].pieceType;
+
+            if (highestRank == 15) break;
+        }
+
+        int kills = killList[defendingPiece.pieceID];
+        int minRank = (int)((highestRank / 3.0f) * (kills > 3 ? 3 : kills));
+
+        PieceType randomPieceType = (PieceType)Random.Range(minRank, highestRank);
+        if (kills > 0) Debug.Log(highestRank);
+        switch (GetContestResult(attackingPiece.pieceType, randomPieceType))
+        {
+            case 0: SplitLoss(attackingPiece, defendingPiece); return true;
+            case 1: AttackerWins(attackingPiece, defendingPiece); return true;
+            case 2: return false;
+        }
+        
+        return true;
     }
 
     private int GetContestResult(PieceType attack, PieceType defense)
@@ -376,33 +485,57 @@ public class BoardState
             if (TileIsValid(row + 1, column, piece, false))
             {
                 BoardState possibleBoardState = this.GenerateChildOfBoardState();
-                possibleBoardState.PlacePiece(row + 1, column, piece, false);
-                childrenBoard.Add(possibleBoardState);
-                ResetInfo();
+                if (possibleBoardState.HypotheticalPlacePiece(row + 1, column, piece))
+                {
+                    ResetInfo();
+                    possibleBoardState.realBoard = GenerateCopyOfBoardState();
+                    possibleBoardState.realBoard.PlacePiece(row + 1, column, piece, false);
+                    ResetInfo();
+                    childrenBoard.Add(possibleBoardState);
+                }
+                else ResetInfo();
             }
 
             if (TileIsValid(row - 1, column, piece, false))
             {
                 BoardState possibleBoardState = this.GenerateChildOfBoardState();
-                possibleBoardState.PlacePiece(row - 1, column, piece, false);
-                childrenBoard.Add(possibleBoardState);
-                ResetInfo();
+                if (possibleBoardState.HypotheticalPlacePiece(row - 1, column, piece))
+                {
+                    ResetInfo();
+                    possibleBoardState.realBoard = GenerateCopyOfBoardState();
+                    possibleBoardState.realBoard.PlacePiece(row - 1, column, piece, false);
+                    ResetInfo();
+                    childrenBoard.Add(possibleBoardState);
+                }
+                else ResetInfo();
             }
 
             if (TileIsValid(row, column + 1, piece, false))
             {
                 BoardState possibleBoardState = this.GenerateChildOfBoardState();
-                possibleBoardState.PlacePiece(row, column + 1, piece, false);
-                childrenBoard.Add(possibleBoardState);
-                ResetInfo();
+                if (possibleBoardState.HypotheticalPlacePiece(row, column + 1, piece))
+                {
+                    ResetInfo();
+                    possibleBoardState.realBoard = GenerateCopyOfBoardState();
+                    possibleBoardState.realBoard.PlacePiece(row, column + 1, piece, false);
+                    ResetInfo();
+                    childrenBoard.Add(possibleBoardState);
+                }
+                else ResetInfo();
             }
 
             if (TileIsValid(row, column - 1, piece, false))
             {
                 BoardState possibleBoardState = this.GenerateChildOfBoardState();
-                possibleBoardState.PlacePiece(row, column - 1, piece, false);
-                childrenBoard.Add(possibleBoardState);
-                ResetInfo();
+                if (possibleBoardState.HypotheticalPlacePiece(row, column - 1, piece))
+                {
+                    ResetInfo();
+                    possibleBoardState.realBoard = GenerateCopyOfBoardState();
+                    possibleBoardState.realBoard.PlacePiece(row, column - 1, piece, false);
+                    ResetInfo();
+                    childrenBoard.Add(possibleBoardState);
+                }
+                else ResetInfo();
             }
         }
     }
@@ -506,5 +639,24 @@ public class BoardState
         }
 
         return true;
+    }
+
+    public bool CheckIfFlagAtEnd()
+    {
+        List<Piece> pieces;
+        if (playerTurn) pieces = alivePlayerPieces;
+        else pieces = aliveComputerPieces;
+
+        foreach (Piece piece in pieces)
+        {
+            if (piece.pieceType == PieceType.Flag)
+            {
+                if (piece.playerPiece && piece.yCoord == 7) return true;
+                else if (!piece.playerPiece && piece.yCoord == 0) return true;
+                else return false;
+            }       
+        }
+
+        return false;
     }
 }

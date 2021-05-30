@@ -25,7 +25,7 @@ public class BoardManager : MonoBehaviour
 
     [SerializeField] private GameObject testObject = null;
 
-    [SerializeField] private List<Positions> computerSetups = null;
+    [SerializeField] private List<BoardSetups> computerSetups = null;
 
     public List<Piece> playerPieces;
     public List<Piece> computerPieces;
@@ -68,7 +68,7 @@ public class BoardManager : MonoBehaviour
 
     private void StartGame()
     {
-        currentBoard.SetupBoardComputer(computerSetups[Random.Range(0, computerSetups.Count)].PiecePositions);
+        currentBoard.SetupBoardComputer(computerSetups[Random.Range(0, computerSetups.Count)]);
 
         SetAllPiecePositions();
 
@@ -90,11 +90,17 @@ public class BoardManager : MonoBehaviour
 
     private void GenerateInitialBoard()
     {
+        List<int> initialKills = new List<int>();
+
+        for (int i = 0; i < 21; i++)
+            initialKills.Add(0);
+
         currentBoard = new BoardState(null, new List<BoardState>(),
                                       null, playerPieces, computerPieces,
                                       new List<Piece>(), new List<Piece>(),
                                       SearchForFlag(playerPieces),
                                       SearchForFlag(computerPieces),
+                                      initialKills, initialKills,
                                       true);
     }
 
@@ -195,8 +201,16 @@ public class BoardManager : MonoBehaviour
                 currentBoard.PlacePiece(mouseX, mouseY, selectedPiece, settingUp);
                 currentBoard.ResetInfo();
                 SetAllPiecePositions();
+
                 if (!currentBoard.CheckIfFlagStillAlive())
                 {
+                    onGameOver.Raise();
+                    return;
+                }
+
+                if (currentBoard.CheckIfFlagAtEnd())
+                {
+                    GM.SwitchTurns();
                     onGameOver.Raise();
                     return;
                 }
@@ -208,8 +222,16 @@ public class BoardManager : MonoBehaviour
                 currentBoard = CH.InitiateSearch(currentBoard);
                 currentBoard.ResetInfo();
                 SetAllPiecePositions();
+
                 if (!currentBoard.CheckIfFlagStillAlive())
                 {
+                    onGameOver.Raise();
+                    return;
+                }
+
+                if (currentBoard.CheckIfFlagAtEnd())
+                {
+                    GM.SwitchTurns();
                     onGameOver.Raise();
                     return;
                 }
@@ -229,7 +251,7 @@ public class BoardManager : MonoBehaviour
 
         if (settingUp && count >= 21) onAllPlayerPiecesOnBoard.Raise();
     }
-    
+
     /* PLAYER FUNCTIONS END */
 
     public void UndoState()
@@ -258,7 +280,7 @@ public class BoardManager : MonoBehaviour
         {
             for (int j = 0; j < 9; j++)
             {
-                int value = currentBoard.board[j, i] != null ? 1 : 0;
+                int value = currentBoard.board[j, i] != null ? (currentBoard.board[j, i].playerPiece ? 1 : 2) : 0;
                 debug += value.ToString() + " ";
             }
 

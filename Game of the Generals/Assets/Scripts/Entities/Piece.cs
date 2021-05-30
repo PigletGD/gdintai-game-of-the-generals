@@ -3,7 +3,7 @@
 public class Piece : MonoBehaviour
 {
     [SerializeField] public PieceType pieceType = PieceType.None;
-    [SerializeField] private int pieceID = -1;
+    [SerializeField] public int pieceID = -1;
     [SerializeField] public bool playerPiece = false;
     [SerializeField] public bool isDead = false;
     [SerializeField] public int xCoord = -1;
