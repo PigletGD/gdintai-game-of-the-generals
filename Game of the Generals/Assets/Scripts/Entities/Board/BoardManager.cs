@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BoardManager : MonoBehaviour
@@ -221,7 +222,6 @@ public class BoardManager : MonoBehaviour
 
                 currentBoard = CH.InitiateSearch(currentBoard);
                 currentBoard.ResetInfo();
-                SetAllPiecePositions();
 
                 if (!currentBoard.CheckIfFlagStillAlive())
                 {
@@ -237,6 +237,10 @@ public class BoardManager : MonoBehaviour
                 }
 
                 GM.SwitchTurns();
+
+                MusicManager.GetInstance().PlayMove();
+
+                StartCoroutine("DelaySetPositions");
             }
         }
 
@@ -253,6 +257,21 @@ public class BoardManager : MonoBehaviour
     }
 
     /* PLAYER FUNCTIONS END */
+
+    IEnumerator DelaySetPositions()
+    {
+        float time = 0;
+
+        while (time < 0.2f)
+        {
+            time += Time.deltaTime;
+            yield return null;
+        }
+
+        MusicManager.GetInstance().PlayMove();
+
+        SetAllPiecePositions();
+    }
 
     public void UndoState()
     {

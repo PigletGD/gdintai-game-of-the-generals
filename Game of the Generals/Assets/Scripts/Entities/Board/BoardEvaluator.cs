@@ -7,17 +7,19 @@ public class BoardEvaluator
 
     private List<Piece> pieces = new List<Piece>();
     private List<Piece> enemies = new List<Piece>();
+    private List<Piece> dead = new List<Piece>();
 
-    private static float OFFENSIVE_MULTIPLIER = 15.0f;
-    private static float FORWARD_MULTIPLIER = 7.0f;
-    private static float CHASE_MULTIPLIER = 12.0f;
+    private static float OFFENSIVE_MULTIPLIER = 20.0f;
+    private static float FORWARD_MULTIPLIER = 12.0f;
+    private static float CHASE_MULTIPLIER = 20.0f;
     private static float DEFENSE_DEDUCTION = 3.0f;
     private static float OPENNESS_VALUE = 2.0f;
-    private static float ADVANTAGE_BIAS = 10.0f;
-    private static float FREE_COLUMN_DEDUCTION = 10.0f;
-    private static float WIN_LOSS_VALUE = 9999.0f;
+    private static float ADVANTAGE_BIAS = 100.0f;
+    private static float FREE_COLUMN_DEDUCTION = 30.0f;
+    private static float WIN_LOSS_VALUE = 9999999.0f;
+    private static float DISADVANTAGE_BIAS = 50.0f;
 
-    private float openColumns = 0;
+    private float freeColumns = 0;
 
     public BoardEvaluator()
     {
@@ -49,12 +51,16 @@ public class BoardEvaluator
         {
             pieces = toEvaluate.alivePlayerPieces;
             enemies = toEvaluate.aliveComputerPieces;
+            dead = toEvaluate.deadPlayerPieces;
         }
         else
         {
             pieces = toEvaluate.aliveComputerPieces;
             enemies = toEvaluate.alivePlayerPieces;
+            dead = toEvaluate.deadPlayerPieces;
         }
+
+        AnalyzeBoard();
 
         foreach (Piece piece in pieces)
         {
@@ -66,10 +72,41 @@ public class BoardEvaluator
         }
 
         computedScore /= pieces.Count;
-        //if (toEvaluate.playerTurn) computedScore += (pieces.Count - enemies.Count) * ADVANTAGE_BIAS;
+        computedScore += (pieces.Count - enemies.Count) * ADVANTAGE_BIAS;
+        computedScore -= CalculateDisadvantage();
+        computedScore -= freeColumns * FREE_COLUMN_DEDUCTION;
 
         if (flagMissing) computedScore = -WIN_LOSS_VALUE;
         toEvaluate.evaluationScore = computedScore;
+    }
+
+    public void AnalyzeBoard()
+    {
+        freeColumns = 0;
+        bool playerTurn = toEvaluate.playerTurn;
+
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                if (toEvaluate.board[i, j] != null &&
+                    toEvaluate.board[i, j].playerPiece != playerTurn)
+                {
+                    break;
+                }
+
+                freeColumns++;
+            }
+        }
+    }
+
+    public float CalculateDisadvantage()
+    {
+        float sum = 0;
+        for (int i = 0; i < dead.Count; i++)
+            sum += dead[i].pieceValue;
+
+        return sum * DISADVANTAGE_BIAS;
     }
 
     public float ComputeScore(Piece computingPiece)
@@ -131,12 +168,12 @@ public class BoardEvaluator
         }
 
         float offensiveness = !toEvaluate.playerTurn ? 0 : ComputeOffensiveness(computingPiece.pieceValue, numAdjacentPieces, forwardValue);
-        float forwardness = computingPiece.pieceType == PieceType.Flag ? (pieces.Count <= 5 ? 0 : ComputeForwardness(forwardValue)) : ComputeForwardness(forwardValue);
-        float chasing = pieces.Count > 10 ? 0 : ComputeChase(computingPiece);
+        float forwardness = computingPiece.pieceType == PieceType.Flag ? (pieces.Count > 7 ? 0 : ComputeForwardness(forwardValue)) : ComputeForwardness(forwardValue);
+        float chasing = (pieces.Count <= 10 || enemies.Count <= 10) ? ComputeChase(computingPiece) : 0;
         float openess = ComputeOpeness(computingPiece.pieceValue, numOpenSpaces);
         float defensiveness = ComputeDefensiveness(computingPiece.pieceValue, numAdjacentPieces);
 
-        float pieceScore = offensiveness + forwardness + chasing + openess - defensiveness;
+        float pieceScore = offensiveness + forwardness + openess - defensiveness - chasing;
 
         return pieceScore;
     }
@@ -150,8 +187,7 @@ public class BoardEvaluator
 
     public float ComputeForwardness(float forwardValue)
     {
-        float forwardScore = forwardValue * FORWARD_MULTIPLIER * (forwardValue >= 3 ? 2 : 1);
-        forwardScore = pieces.Count > 10 ? forwardScore : forwardScore * (forwardValue > 4 ? 1 : 5 - forwardValue);
+        float forwardScore = (forwardValue * FORWARD_MULTIPLIER) + (7 - forwardValue) * 10.0f;
 
         return forwardScore;
     }
@@ -165,7 +201,7 @@ public class BoardEvaluator
 
     public float ComputeChase(Piece computingPiece)
     {
-        if (computingPiece.pieceType == PieceType.Flag) return 0;
+        if (computingPiece.pieceType == PieceType.Flag) return 100;
 
         float chaseScore;
         int closestDistance = 99999;
@@ -182,7 +218,7 @@ public class BoardEvaluator
 
     public float ComputeDefensiveness(float pieceValue, float numAdjacentPieces)
     {
-        float defensiveScore = (DEFENSE_DEDUCTION * numAdjacentPieces) - pieceValue;
+        float defensiveScore = ((DEFENSE_DEDUCTION * numAdjacentPieces) - pieceValue) * DEFENSE_DEDUCTION;
 
         return defensiveScore;
     }

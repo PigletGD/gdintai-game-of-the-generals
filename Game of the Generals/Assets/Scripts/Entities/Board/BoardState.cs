@@ -283,15 +283,19 @@ public class BoardState
             return true;
         }
 
-        List<Piece> pieceList; List<int> killList;
+        List<Piece> pieceList; List<Piece> enemyList; List<int> killList;
+        PieceType randomPieceType;
+
         if (attackingPiece.playerPiece)
         {
             pieceList = alivePlayerPieces;
+            enemyList = aliveComputerPieces;
             killList = computerKills;
         }
         else
         {
             pieceList = aliveComputerPieces;
+            enemyList = alivePlayerPieces;
             killList = playerKills;
         }
 
@@ -307,16 +311,14 @@ public class BoardState
         int kills = killList[defendingPiece.pieceID];
         int minRank = (int)((highestRank / 3.0f) * (kills > 3 ? 3 : kills));
 
-        PieceType randomPieceType = (PieceType)Random.Range(minRank, highestRank);
-        if (kills > 0) Debug.Log(highestRank);
-        switch (GetContestResult(attackingPiece.pieceType, randomPieceType))
-        {
-            case 0: SplitLoss(attackingPiece, defendingPiece); return true;
-            case 1: AttackerWins(attackingPiece, defendingPiece); return true;
-            case 2: return false;
-        }
+        if (kills > 0) Debug.Log(kills);
+
+        randomPieceType = (PieceType)Random.Range(minRank, highestRank);
+
+        int result = GetContestResult(attackingPiece.pieceType, randomPieceType);
+        if (result == 0 || result == 1) return HypotheticalContest(attackingPiece, defendingPiece, randomPieceType);
         
-        return true;
+        return false;
     }
 
     private int GetContestResult(PieceType attack, PieceType defense)
@@ -655,6 +657,30 @@ public class BoardState
                 else if (!piece.playerPiece && piece.yCoord == 0) return true;
                 else return false;
             }       
+        }
+
+        return false;
+    }
+
+    public bool HypotheticalContest(Piece attackingPiece, Piece defendingPiece, PieceType randomPieceType)
+    {
+        if (Random.value > 0.35f)
+        {
+            switch (GetContestResult(attackingPiece.pieceType, defendingPiece.pieceType))
+            {
+                case 0: SplitLoss(attackingPiece, defendingPiece); return true;
+                case 1: AttackerWins(attackingPiece, defendingPiece); return true;
+                case 2: return false;
+            }
+        }
+        else
+        {
+            switch (GetContestResult(attackingPiece.pieceType, randomPieceType))
+            {
+                case 0: SplitLoss(attackingPiece, defendingPiece); return true;
+                case 1: AttackerWins(attackingPiece, defendingPiece); return true;
+                case 2: return false;
+            }
         }
 
         return false;

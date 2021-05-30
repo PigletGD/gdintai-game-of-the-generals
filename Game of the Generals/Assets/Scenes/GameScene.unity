@@ -6915,7 +6915,8 @@ MonoBehaviour:
   testObject: {fileID: 5850632525590931481, guid: 88ad87b6b9aa60845bd358bd8f8be22a,
     type: 3}
   computerSetups:
-  - {fileID: 11400000, guid: c32e24629f1febd4dbe0a020fccdf0c3, type: 2}
+  - {fileID: 11400000, guid: e48ce385758d0ef449813a20d4f952c8, type: 2}
+  - {fileID: 11400000, guid: e48ce385758d0ef449813a20d4f952c8, type: 2}
   playerPieces:
   - {fileID: 594638521}
   - {fileID: 424521936}
