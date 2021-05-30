@@ -41,6 +41,11 @@ public class BoardManager : MonoBehaviour
         CH = new ComputerHandler();
     }
 
+    private void OnDisable()
+    {
+        StopAllCoroutines();
+    }
+
     public void ClickedSetupButton()
     {
         int count = 0;

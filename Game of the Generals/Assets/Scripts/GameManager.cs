@@ -93,11 +93,19 @@ public class GameManager : MonoBehaviour
 
     public void ReplayGame()
     {
+        Time.timeScale = 1;
+
+        gameOver = true;
+
         SceneManager.LoadScene("GameScene");
     }
 
     public void GoToMainMenu()
     {
+        Time.timeScale = 1;
+
+        gameOver = true;
+
         SceneManager.LoadScene("MainMenuScene");
     }
 
